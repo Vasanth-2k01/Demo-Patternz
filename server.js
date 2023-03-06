@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const bodyParser = require("body-parser");
 // const multer = require("multer");
 const cors = require("cors");
@@ -32,15 +33,19 @@ app.use(log);
 
 const passport = require("passport");
 const passportConfig = require("./config/passport");
-const passportJWTUSERS = passport.authenticate('jwtUser', { session: false })
 const passportJWT = passport.authenticate('jwt', { session: false })
+const passportJWTADMIN = passport.authenticate('jwtAdmin', { session: false })
+// const passportJWTSUPERADMIN = passport.authenticate('jwtSuperAdmin', { session: false })
 
 app.use(passport.initialize());
 // app.use(passport.session());
 
 //Employee
-var employeeroutes = require("./routes/employeeroutes")(passportJWT, passportJWTUSERS);
-app.use("/employee", employeeroutes);
+var userroutes = require("./routes/userroutes")(passportJWT, passportJWTADMIN);
+app.use("/user", userroutes);
+
+var adminroutes = require("./routes/adminroutes")(passportJWT, passportJWTADMIN);
+app.use("/admin", adminroutes);
 
 // error handler
 app.use(function (err, req, res, next) {
@@ -53,5 +58,5 @@ app.use(function (err, req, res, next) {
 
 //Listener..
 app.listen(port, "0.0.0.0", () =>
-  console.log(`Server running on port http://localhost:${port}`, new Date().getTime(), 'new Date()')
+  console.log(`Server running on port http://localhost:${port}`, new Date().getTime(), 'new Date()', crypto.randomUUID())
 );

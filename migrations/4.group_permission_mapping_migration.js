@@ -17,6 +17,7 @@ exports.up = function () {
       .uuid("permission_id")
       .references("id")
       .inTable("master_permissions")
+    table.integer("is_permission_allowed").notNullable();
     table.timestamp("created_at").defaultTo(knex.fn.now());
   });
 };

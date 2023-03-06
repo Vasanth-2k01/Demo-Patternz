@@ -14,11 +14,11 @@ signToken = user => {
     exp: JWTEXP,
   }, process.env.JWT_SECRET);
 }
-class Employees {
-  static async EmployeeList() {
-    console.log("EmployeeList inside Model");
+class Users {
+  static async UserList() {
+    console.log("UserList inside Model");
     try {
-      let query = knex(process.env.USERS).where("isdeleted", 1);
+      let query = knex(process.env.USERS).where('group_type', 3).andWhere("isdeleted", 1);
       let result = await query;
       if (!result) {
         return {
@@ -29,7 +29,7 @@ class Employees {
       }
       return {
         success: true,
-        message: "Employee Listed Successfully",
+        message: "User Listed Successfully",
         data: result.map((obj) => ({
           id: obj.id,
           name: obj.name,
@@ -51,10 +51,11 @@ class Employees {
     }
   }
 
-  static async AddEmployee(req) {
-    console.log("AddEmployee inside Model");
+  static async AddUser(req) {
+    console.log("AddUser inside Model");
     try {
       let is_user_exist = knex(process.env.USERS)
+        // .where("group_type", 2)
         .where("email", req.body.email)
         .andWhere("isdeleted", 1);
 
@@ -63,48 +64,46 @@ class Employees {
       if (is_user_exist_check.length) {
         return {
           success: false,
-          message: "Employee Already Exist",
+          message: "User Already Exist",
           data: {},
         };
       }
-      let employee_id;
+      let user_id;
       let query = knex
         .insert({
           id: crypto.randomUUID(),
-          group_type: req.body.group_type,
+          group_type: 3,
           name: req.body.name,
           surname: req.body.surname,
           email: req.body.email,
           password: common.encryptPWD(req.body.password),
-          image: fileUpload.imageLoop(req.files),
+          image: req.files.image && req.files.image.length ? fileUpload.imageLoop(req.files) : '',
         })
         .returning("id")
         .into(process.env.USERS)
-        .then((id) => {
-          id.map((emp_id) => {
-            employee_id = emp_id.id;
-          });
+        .then(async (return_user_id) => {
+          user_id = await return_user_id[0].id;
         });
       await query;
 
       let group_id_query = knex
         .select("id")
         .from(process.env.GROUP)
-        .where("type", req.body.group_type)
+        .where("type", 3)
         .first();
 
       let group_id = await group_id_query;
 
       let mapping_query = knex(process.env.USERS_GROUP_MAPPING).insert({
         id: crypto.randomUUID(),
-        employee_id: employee_id,
+        user_id: user_id,
         group_id: group_id.id,
       });
       await mapping_query;
 
       return {
         success: true,
-        message: "Employee Added Successfully",
+        message: "User Added Successfully",
         data: {},
       };
     } catch (error) {
@@ -116,11 +115,10 @@ class Employees {
     }
   }
 
-  static async EmployeeListById(req) {
-    console.log("EmployeeListById inside Model");
+  static async UserListById(req) {
+    console.log("UserListById inside Model");
     try {
-      let query = knex(process.env.USERS)
-        .where("id", req.id)
+      let query = knex(process.env.USERS).where('group_type', 3).andWhere("id", req.id)
         .andWhere("isdeleted", 1);
       let result = await query;
       console.log(result, "result");
@@ -133,7 +131,7 @@ class Employees {
       }
       return {
         success: true,
-        message: "Employee Listed By Id Successfully",
+        message: "User Listed By Id Successfully",
         data: result.map((obj) => ({
           id: obj.id,
           name: obj.name,
@@ -154,13 +152,12 @@ class Employees {
     }
   }
 
-  static async EditEmployee(req) {
-    console.log("EditEmployee inside Model");
-    let listbyId = await Employees.EmployeeListById(req.params);
+  static async EditUser(req) {
+    console.log("EditUser inside Model");
+    let listbyId = await Users.EmployeeListById(req.params);
     if (listbyId.success) {
       try {
-        let query = knex(process.env.USERS)
-          .where("id", req.params.id)
+        let query = knex(process.env.USERS).where('group_type', 3).andWhere("id", req.params.id)
           .update({
             name: req.body.name,
             surname: req.body.surname,
@@ -178,7 +175,7 @@ class Employees {
         }
         return {
           success: true,
-          message: "Employee Edited Successfully",
+          message: "User Edited Successfully",
           data: {},
         };
       } catch (error) {
@@ -197,12 +194,12 @@ class Employees {
     }
   }
 
-  static async DeleteEmployee(req) {
-    console.log("DeleteEmployee inside Model");
-    let listbyId = await Employees.EmployeeListById(req);
+  static async DeleteUser(req) {
+    console.log("DeleteUser inside Model");
+    let listbyId = await Users.EmployeeListById(req);
     if (listbyId.success) {
       try {
-        let query = knex(process.env.USERS).where("id", req.id).update({
+        let query = knex(process.env.USERS).where('group_type', 3).andWhere("id", req.id).update({
           isdeleted: 0,
         });
 
@@ -216,7 +213,7 @@ class Employees {
         }
         return {
           success: true,
-          message: "Employee Deleted Successfully",
+          message: "User Deleted Successfully",
           data: {},
         };
       } catch (error) {
@@ -234,86 +231,8 @@ class Employees {
       };
     }
   }
-  static async EmployeeListByType(req) {
-    console.log("EmployeeListByType inside Model", req.query);
-    try {
-      // let query = knex(`${process.env.USERS} as e`)
-      //   .leftJoin(
-      //     `${process.env.USERS_GROUP_MAPPING} as egm`,
-      //     "e.id",
-      //     "egm.employee_id"
-      //   )
-      //   .join(`${process.env.GROUP} as g`, "g.id", "egm.group_id")
-      //   .where("g.type", req.query.type);
-
-      let query = knex(process.env.USERS)
-        .where("group_type", req.query.type)
-        .andWhere("isdeleted", 1);
-      let result = await query;
-      if (!result.length) {
-        return {
-          success: false,
-          message: "No Record Found",
-          data: {},
-        };
-      }
-      return {
-        success: true,
-        message: "Employee Listed Successfully",
-        data: result,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-        data: {},
-      };
-    }
-  }
-  static async getEmployeeListWithGroup() {
-    console.log("getEmployeeListWithGroup inside Model");
-    try {
-
-      // let query = knex.raw(`select e.name ,
-      // (select json_build_object( 'group_id', json_agg(g.id) ,'group_name', json_agg(g."name"))
-      // from "group" g left join employee_group_mapping egm on g.id = egm.group_id where e.id = egm.employee_id) 
-      // as group  from employee e`);
 
 
-      // let query = knex.raw(`select e.name ,
-      // (select json_build_object('grp',array_agg('{group_id:' || g.id || ',group_name:' || g."name"  || '}'))
-      // from "group" g left join employee_group_mapping egm on g.id = egm.group_id where e.id = egm.employee_id) 
-      // as group  from employee e`)
-
-
-      let query = knex.raw(`select e."name",(select
-      array_agg ('{group_id:' || g.id || ',group_name:' || g."name"  || '}')
-      from employee_group_mapping egm left join "group" g on g.id = egm.group_id 
-      where egm.employee_id = e.id ) as group from employee e`);
-      let result = await query;
-      if (!result) {
-        return {
-          success: false,
-          message: "No Record Found",
-          data: {},
-        };
-      }
-      console.log(result.rows, "result");
-      let json = JSON.stringify(result.rows)
-      console.log(JSON.parse(json), "result");
-      return {
-        success: true,
-        message: "Employee Listed Successfully",
-        data: result.rows,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-        data: {},
-      };
-    }
-  }
 }
 
-module.exports = Employees;
+module.exports = Users;

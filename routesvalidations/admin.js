@@ -22,8 +22,6 @@ module.exports = {
       if (result.error) {
         return res.status(400).json(result.error.details);
       }
-      // if (!req.value) { req.value = {}; }
-      // req.value['body'] = result.value;
       next();
     }
   },
@@ -42,7 +40,7 @@ module.exports = {
   },
 
   schemas: {
-    EmployeeSchema: Joi.object({
+    AdminSchema: Joi.object({
       name: Joi.string().trim().max(255).required(),
       surname: Joi.string().trim().max(255).required(),
       email: Joi.string().email().required(),
@@ -50,7 +48,7 @@ module.exports = {
       group_type: Joi.number().min(1).max(3).required(),
     }),
 
-    EmployeeIdSchema:
+    AdminIdSchema:
       Joi.object().keys({
         id: Joi.string().guid().required(),
       })

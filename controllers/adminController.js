@@ -1,6 +1,6 @@
 "use strict";
 require("dotenv").config();
-const Employees = require("../Models/employeeModel.js");
+const Admin = require("../Models/adminModel.js");
 const common = require("../common/common");
 module.exports = {
   Login: async (req, res, next) => {
@@ -17,9 +17,9 @@ module.exports = {
     res.status(200).send({ status: 0, message: 'Logged In Successfully', result: {} });
   },
 
-  AddEmployee: async (req, res, next) => {
-    console.log("AddEmployee inside Controller");
-    let results = await Employees.AddEmployee(req);
+  AddAdmin: async (req, res, next) => {
+    console.log("AddAdmin inside Controller");
+    let results = await Admin.AddAdmin(req);
     if (results.success) {
       res.status(200).send({
         status: 1,
@@ -34,9 +34,9 @@ module.exports = {
       });
     }
   },
-  EmployeeList: async (req, res, next) => {
-    console.log("EmployeeList inside Controller");
-    let results = await Employees.EmployeeList();
+  AdminList: async (req, res, next) => {
+    console.log("AdminList inside Controller", req.body);
+    let results = await Admin.AdminList();
     if (results.success) {
       res.status(200).send({
         status: 1,
@@ -51,27 +51,9 @@ module.exports = {
       });
     }
   },
-  EmployeeListById: async (req, res, next) => {
-    console.log("EmployeeListById inside Controller");
-    let results = await Employees.EmployeeListById(req.params);
-    if (results.success) {
-      res.status(200).send({
-        status: 1,
-        message: results.message,
-        result: results.data,
-      });
-    } else {
-      res.status(400).send({
-        status: 0,
-        message: results.message,
-        result: {},
-      });
-    }
-  },
-
-  EditEmployee: async (req, res, next) => {
-    console.log("EditEmployee inside Controller");
-    let results = await Employees.EditEmployee(req);
+  AdminListById: async (req, res, next) => {
+    console.log("AdminListById inside Controller");
+    let results = await Admin.AdminListById(req.params);
     if (results.success) {
       res.status(200).send({
         status: 1,
@@ -87,9 +69,9 @@ module.exports = {
     }
   },
 
-  DeleteEmployee: async (req, res, next) => {
-    console.log("DeleteEmployee inside Controller");
-    let results = await Employees.DeleteEmployee(req.params);
+  EditAdmin: async (req, res, next) => {
+    console.log("EditAdmin inside Controller");
+    let results = await Admin.EditAdmin(req);
     if (results.success) {
       res.status(200).send({
         status: 1,
@@ -104,9 +86,10 @@ module.exports = {
       });
     }
   },
-  EmployeeListByType: async (req, res, next) => {
-    console.log("EmployeeListByType inside Controller");
-    let results = await Employees.EmployeeListByType(req);
+
+  DeleteAdmin: async (req, res, next) => {
+    console.log("DeleteAdmin inside Controller");
+    let results = await Admin.DeleteAdmin(req.params);
     if (results.success) {
       res.status(200).send({
         status: 1,
@@ -119,17 +102,6 @@ module.exports = {
         message: results.message,
         result: {},
       });
-    }
-  },
-  getEmployeeListWithGroup: async (req, res, next) => {
-    console.log("getEmployeeListWithGroup inside Controller");
-    let results = await Employees.getEmployeeListWithGroup();
-    if (results.success) {
-      res
-        .status(200)
-        .send({ status: 1, message: results.message, result: results.data });
-    } else {
-      res.status(400).send({ status: 0, message: results.message, result: {} });
     }
   },
 };
