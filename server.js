@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 // const multer = require("multer");
 const cors = require("cors");
 const fs = require("fs");
+const { errorHandler } = require("./common/helpers");
 require("dotenv").config();
 
 const port = process.env.PORT || 2000;
@@ -48,13 +49,7 @@ var adminroutes = require("./routes/adminroutes")(passportJWT, passportJWTADMIN)
 app.use("/admin", adminroutes);
 
 // error handler
-app.use(function (err, req, res, next) {
-  console.log("unknown error", err);
-  res.status(err.status || 500);
-  res.json({
-    message: err.message,
-  });
-});
+app.use(errorHandler);
 
 //Listener..
 app.listen(port, "0.0.0.0", () =>

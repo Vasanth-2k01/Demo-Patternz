@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { verify } = require('../common/helpers')
 
 module.exports = {
   validateBody: (schema) => {
@@ -7,10 +8,8 @@ module.exports = {
       console.log('Joi.object()', Joi.object(), 'Joi.object()')
       const result = schema.validate(req.body);
       if (result.error) {
-        return res.status(400).json(result.error.details);
+        verify(result.error)
       }
-      // if (!req.value) { req.value = {}; }
-      // req.value['body'] = result.value;
       next();
     }
   },
@@ -44,8 +43,11 @@ module.exports = {
       name: Joi.string().trim().max(255).required(),
       surname: Joi.string().trim().max(255).required(),
       email: Joi.string().email().required(),
-      password: Joi.string().max(255).required(),
-      group_type: Joi.number().min(1).max(3).required(),
+      password: Joi.string().trim().max(255).required(),
+      // image: Joi.string().trim().max(255).required()
+      // Joi.string()
+      // .pattern(new RegExp('/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/')).required(),
+      // group_type: Joi.number().min(1).max(3).required(),
     }),
 
     AdminIdSchema:

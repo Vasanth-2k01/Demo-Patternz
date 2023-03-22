@@ -2,6 +2,8 @@
 require("dotenv").config();
 const Admin = require("../Models/adminModel.js");
 const common = require("../common/common");
+const utils = require('../utils/index');
+const crypto = require('crypto');
 module.exports = {
   Login: async (req, res, next) => {
     console.log("Login inside Controller");
@@ -35,8 +37,7 @@ module.exports = {
     }
   },
   AdminList: async (req, res, next) => {
-    console.log("AdminList inside Controller", req.body);
-    let results = await Admin.AdminList();
+    let results = await Admin.AdminList(req);
     if (results.success) {
       res.status(200).send({
         status: 1,
@@ -95,6 +96,22 @@ module.exports = {
         status: 1,
         message: results.message,
         result: results.data,
+      });
+    } else {
+      res.status(400).send({
+        status: 0,
+        message: results.message,
+        result: {},
+      });
+    }
+  },
+  getProfile: async (req, res, next) => {
+    console.log("AdminList inside Controller", req.body);
+    if (req.user) {
+      res.status(200).send({
+        status: 1,
+        message: "Profile Listed successfully",
+        result: req.user,
       });
     } else {
       res.status(400).send({

@@ -4,6 +4,8 @@ var JWT = require("jsonwebtoken");
 var fileUpload = require("../common/fileupload");
 var common = require("../common/common");
 const dotenv = require("dotenv").config();
+const { CustomError } = require('../utils/index');
+const helpers = require("../common/helpers");
 
 signToken = user => {
   var JWTEXP = user.expToken == 1 ? (new Date().getTime() + (365 * 24 * 60 * 60 * 1000)) : (new Date().getTime() + 604800 * 1000) / 1000;
@@ -15,11 +17,26 @@ signToken = user => {
   }, process.env.JWT_SECRET);
 }
 class Admin {
-  static async AdminList() {
-    console.log("AdminList inside Model");
+  static async AdminList(req) {
+    console.log("AdminList inside Model", req.query);
     try {
-      let query = knex(process.env.USERS).where('group_type', 2).andWhere("isdeleted", 1);
+      var page = parseInt(req.query.page)
+      var limit = parseInt(req.query.limit)
+      var offsets = ((page - 1) * limit);
+
+      let selectArray = ['id', 'name', 'surname', 'email', 'image']
+      let rowcountQuery = knex(process.env.USERS).count('*').where('group_type', 2).andWhere("isdeleted", 1).first()
+      let query = knex(process.env.USERS).select(selectArray).where('group_type', 2).andWhere("isdeleted", 1)
+        .orderBy('created_at', 'asc').limit(limit).offset(offsets)
+      console.log("query", query.toSQL());
+      console.log("rowcountQuery", rowcountQuery.toSQL());
+
+      // desc
+      let rowcount = await rowcountQuery;
       let result = await query;
+      // result.rows = result1.count
+      console.log("result", result);
+      console.log("rowcount", rowcount);
       if (!result) {
         return {
           success: false,
@@ -27,28 +44,16 @@ class Admin {
           data: {},
         };
       }
+      // let finalArray =
+      result.data = await helpers.GetAllList(req.body, result.map(fileUpload.setImageUrl), rowcount.count, page, limit, offsets, 'admin/getAdminList')
+      console.log(result.data, 'result.data');
       return {
         success: true,
         message: "Admin Listed Successfully",
-        data: result
-          .map((obj) => ({
-            id: obj.id,
-            name: obj.name,
-            surname: obj.surname,
-            email: obj.email,
-            password: common.decryptPWD(obj.password),
-            image:
-              process.env.ENVIRONMENT_URL + "/" + obj.image ||
-              fileUpload.base64Conversion(obj.image),
-          })),
+        data: result.data
       };
     } catch (error) {
-      console.log(error, 'error');
-      return {
-        success: false,
-        message: error.message,
-        data: {},
-      };
+      throw new CustomError(error.message, 500, null)
     }
   }
 
@@ -119,11 +124,12 @@ class Admin {
   static async AdminListById(req) {
     console.log("AdminListById inside Model");
     try {
-      let query = knex(process.env.USERS).where('group_type', 2).andWhere("id", req.id)
-        .andWhere("isdeleted", 1);
+      let selectArray = ['id', 'name', 'surname', 'email', 'image']
+      let query = knex(process.env.USERS).select(selectArray).where('group_type', 2).andWhere("id", req.id)
+        .andWhere("isdeleted", 1).first();
       let result = await query;
       console.log(result, "result");
-      if (!result.length) {
+      if (!result) {
         return {
           success: false,
           message: "No Record Found",
@@ -133,16 +139,7 @@ class Admin {
       return {
         success: true,
         message: "Admin Listed By Id Successfully",
-        data: result.map((obj) => ({
-          id: obj.id,
-          name: obj.name,
-          surname: obj.surname,
-          email: obj.email,
-          password: common.decryptPWD(obj.password),
-          image:
-            process.env.ENVIRONMENT_URL + "/" + obj.image ||
-            fileUpload.base64Conversion(obj.image),
-        })),
+        data: fileUpload.setImageUrl(result)
       };
     } catch (error) {
       return {

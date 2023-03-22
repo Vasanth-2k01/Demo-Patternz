@@ -1,5 +1,5 @@
 const common = require("../common/common");
-const helper = require("../helper/helper");
+const helper = require("../common/helpers");
 
 module.exports = (passportJWT, passportJWTADMIN) => {
   console.log("userroutes inside routes");
